@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -26,7 +25,7 @@ class AuthController extends Controller
         // If the existed errors
         if ($validator->fails()) {
             return response()->json([
-                'error' => $validator->errors()
+                'error' => $validator->errors(),
             ], 422);
         }
         // The data input is passed
@@ -44,7 +43,28 @@ class AuthController extends Controller
     }
     public function login(LoginRequest $request)
     {
-        dd($request->all());
+        $credentials = $request->only('name', 'password');
+        /**
+         * Attemp with method attempt of JWTAuth Facade
+         * In the case , the input credentials is truth then
+         * that method generate a token otherwise the false value is returned
+         */
+        try {
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return response()->json([
+                    'error' => ' invalid credentials ',
+                ], 400);
+            }
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $th) {
+            return response()->json([
+                'error' => ' not create token ',
+            ], 400);
+        }
+        return response()->json([
+            'message' => 'successfully',
+            'data' => $credentials['name'],
+            'token' => $token,
+        ], 200);
 
     }
 }
